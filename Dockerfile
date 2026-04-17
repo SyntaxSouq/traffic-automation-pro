@@ -2,12 +2,17 @@ FROM mcr.microsoft.com/playwright:v1.59.1-jammy-amd64
 
 WORKDIR /app
 
-# Copy root dependencies first
+# Copy package files first for better caching
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy project files
+# Copy all project files
 COPY . .
+
+# Install Playwright browsers and dependencies
+RUN npx playwright install --with-deps chromium
 
 # Build frontend
 WORKDIR /app/frontend
@@ -23,9 +28,6 @@ ENV PORT=7860
 
 # Expose port
 EXPOSE 7860
-
-# Force rebuild trigger
-RUN echo "clean-build-v4"
 
 # Start application
 CMD ["node", "backend/server.js"]

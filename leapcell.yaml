@@ -1,0 +1,35 @@
+# Leapcell Deployment Configuration
+# This file configures how your app runs on Leapcell
+
+version: "1.0"
+
+service:
+  name: web-automation-platform
+  runtime: nodejs
+  node_version: "18"
+  
+  # Build configuration
+  build:
+    commands:
+      - npm install
+      - cd frontend && npm install && npm run build
+  
+  # Start command
+  start:
+    command: node backend/server.js
+  
+  # Environment variables
+  env:
+    NODE_ENV: production
+    PORT: 7860
+  
+  # Resource allocation
+  resources:
+    cpu: 1
+    memory: 2GB
+  
+  # Health check
+  health_check:
+    path: /api/health
+    interval: 30
+    timeout: 5

@@ -98,12 +98,18 @@ router.post('/automate', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
   
   const startTime = Date.now();
   
-  // Progress callback function
+  // Progress callback function with immediate flush
   const onProgress = (progressData) => {
-    res.write(`data: ${JSON.stringify({ type: 'progress', ...progressData })}\n\n`);
+    const data = `data: ${JSON.stringify({ type: 'progress', ...progressData })}\n\n`;
+    res.write(data);
+    // Force flush if possible
+    if (res.flush) {
+      res.flush();
+    }
   };
   
   const result = await automateWebsite(processedUrl, { ...safeOptions, visitCount, loopCount, maxBatchVisits, trafficMode, maxVisits: MAX_VISITS }, onProgress);

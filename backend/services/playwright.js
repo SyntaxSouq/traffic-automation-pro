@@ -839,7 +839,11 @@ async function automateStealthTraffic(url, options = {}, onProgress = null) {
   
   try {
     const visitCount = Number.isInteger(options.visitCount) ? options.visitCount : 1;
-    const maxBatchVisits = Number.isInteger(options.maxBatchVisits) ? options.maxBatchVisits : 5;
+    // CRITICAL FIX: Limit batch size to 3 for Hugging Face Spaces to prevent memory issues
+    const maxBatchVisits = Math.min(
+      Number.isInteger(options.maxBatchVisits) ? options.maxBatchVisits : 5,
+      3  // Max 3 concurrent visits for HF Spaces stability
+    );
     const captureScreenshots = visitCount === 1 ? true : Boolean(options.captureScreenshots);
 
     browser = await chromium.launch({
@@ -853,7 +857,9 @@ async function automateStealthTraffic(url, options = {}, onProgress = null) {
         '--disable-dev-shm-usage',
         '--no-first-run',
         '--no-default-browser-check',
-        '--js-flags=--max-old-space-size=4096'
+        '--js-flags=--max-old-space-size=2048',
+        '--disable-gpu',
+        '--disable-software-rasterizer'
       ]
     });
 
@@ -953,7 +959,7 @@ async function automateStealthTraffic(url, options = {}, onProgress = null) {
         
         // Small delay between starting visits to avoid detection
         if (activeVisits.size < maxBatchVisits && nextVisitIndex < visitCount) {
-          await randomDelay(500, 1500);
+          await randomDelay(800, 2000);  // Increased delay for better stability
         }
       }
       
@@ -965,6 +971,9 @@ async function automateStealthTraffic(url, options = {}, onProgress = null) {
         if (global.gc) {
           global.gc();
         }
+        
+        // Additional delay between batches to prevent overwhelming the server
+        await randomDelay(500, 1500);
       }
     }
     
