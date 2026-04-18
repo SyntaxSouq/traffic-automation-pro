@@ -8,17 +8,21 @@ service:
   runtime: nodejs
   node_version: "18"
   
-  # Build configuration - CRITICAL: Must build frontend
+  # Build configuration - CRITICAL: Must install Playwright browsers
   build:
     commands:
       - npm install
+      - npx playwright install chromium
+      - npx playwright install-deps chromium
       - cd frontend
       - npm install
       - npm run build
       - cd ..
-      - echo "Build complete. Verifying frontend/dist exists..."
+      - echo "Build complete. Verifying setup..."
       - ls -la frontend/dist/
-  
+      - echo "Playwright browsers installed:"
+      - ls -la .cache/ms-playwright/ || echo "No .cache directory"
+
   # Start command
   start:
     command: node backend/server.js
