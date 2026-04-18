@@ -687,20 +687,29 @@ async function runSingleVisit({ url, profile, browser, captureScreenshot }) {
 
     let response;
     try {
+      console.log(`   Navigating to: ${url}`);
       response = await page.goto(url, {
         waitUntil: 'domcontentloaded',
-        timeout: 15000
+        timeout: 30000
       });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+      console.log(`   Page reached with status: ${response ? response.status() : 'No response'}`);
+      await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {
+        console.log('   Wait for networkidle timed out (continuing anyway)');
+      });
     } catch (error) {
+      console.log(`   ⚠️ Initial navigation failed: ${error.message}. Retrying with longer timeout...`);
       response = await page.goto(url, {
         waitUntil: 'load',
-        timeout: 20000
-      }).catch(() => null);
+        timeout: 45000
+      }).catch((e) => {
+        console.log(`   ❌ Retry navigation failed: ${e.message}`);
+        return null;
+      });
+      
       if (!response) {
-        throw new Error('Website failed to load. It may be blocking automated browsers or requires authentication.');
+        throw new Error('Website failed to load. It may be blocking automated browsers or requires authentication. Try using Stealth mode or a different URL.');
       }
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(5000);
     }
 
     await randomDelay(900, 1900);
@@ -715,6 +724,14 @@ async function runSingleVisit({ url, profile, browser, captureScreenshot }) {
 
     const statusCode = response ? response.status() : 200;
     const finalUrl = page.url();
+
+    if (statusCode >= 400) {
+      console.log(`   ❌ Website returned error status: ${statusCode}`);
+      if (statusCode === 403 || statusCode === 401) {
+        throw new Error(`Website blocked access (Status ${statusCode}). This site may have strong anti-bot protection or requires a login.`);
+      }
+      throw new Error(`Website returned an error status: ${statusCode}`);
+    }
 
     const [title, screenshot, performance, ipData, consoleLogs] = await Promise.allSettled([
       page.title().catch(() => 'Unknown'),
@@ -856,10 +873,18 @@ async function automateWebsite(url, options = {}, onProgress = null) {
   }
 
   // Update final summary to include all loops
-  lastResult.summary.total = allSuccesses + allFailures;
-  lastResult.summary.successes = allSuccesses;
-  lastResult.summary.failures = allFailures;
-  lastResult.loopCount = loopCount;
+  if (lastResult && lastResult.summary) {
+    lastResult.summary.total = allSuccesses + allFailures;
+    lastResult.summary.successes = allSuccesses;
+    lastResult.summary.failures = allFailures;
+    lastResult.loopCount = loopCount;
+    // If we have at least one success, we can consider the overall operation a partial success
+    if (allSuccesses > 0) {
+      lastResult.success = true;
+    } else {
+      lastResult.success = false;
+    }
+  }
 
   return lastResult;
 }
@@ -893,7 +918,14 @@ async function automateStealthTraffic(url, options = {}, onProgress = null) {
         '--disable-software-rasterizer',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
+        '--disable-renderer-backgrounding',
+        '--window-position=0,0',
+        '--ignore-certificate-errors',
+        '--ignore-certificate-errors-spki-list',
+        '--no-zygote',
+        '--single-process',
+        '--hide-scrollbars',
+        '--mute-audio'
       ]
     });
 
