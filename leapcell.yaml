@@ -16,7 +16,7 @@ service:
       - npx playwright install-deps chromium
       - cd frontend
       - npm install
-      - npm run build
+      - npx vite build
       - cd ..
       - echo "Build complete. Verifying setup..."
       - ls -la frontend/dist/

@@ -16,7 +16,7 @@ npm install
 
 # Build frontend
 echo "🔨 Building frontend..."
-npm run build
+npx vite build
 
 # Return to root
 cd ..
