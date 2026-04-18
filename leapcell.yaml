@@ -6,7 +6,7 @@ version: "1.0"
 service:
   name: web-automation-platform
   runtime: nodejs
-  node_version: "18"
+  node_version: "20"
   
   # Build configuration - CRITICAL: Must install Playwright browsers
   build:
@@ -16,6 +16,7 @@ service:
       - npx playwright install-deps chromium
       - cd frontend
       - npm install
+      - export PATH="./node_modules/.bin:$PATH"
       - npx vite build
       - cd ..
       - echo "Build complete. Verifying setup..."

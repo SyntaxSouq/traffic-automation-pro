@@ -17,7 +17,7 @@ RUN npx playwright install --with-deps chromium
 # Build frontend
 WORKDIR /app/frontend
 RUN npm install
-RUN npm run build
+RUN npx vite build
 
 # Return to root
 WORKDIR /app
