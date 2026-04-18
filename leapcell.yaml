@@ -15,9 +15,8 @@ service:
       - npx playwright install chromium
       - npx playwright install-deps chromium
       - cd frontend
-      - npm install
-      - export PATH="./node_modules/.bin:$PATH"
-      - npx vite build
+      - npm install --include=dev
+      - npm run build
       - cd ..
       - echo "Build complete. Verifying setup..."
       - ls -la frontend/dist/
@@ -32,6 +31,7 @@ service:
   env:
     NODE_ENV: production
     PORT: 7860
+    PLAYWRIGHT_BROWSERS_PATH: /app/.cache/ms-playwright
   
   # Resource allocation
   resources:

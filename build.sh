@@ -12,11 +12,11 @@ npm install
 # Install frontend dependencies
 echo "📦 Installing frontend dependencies..."
 cd frontend
-npm install
+npm install --include=dev
 
 # Build frontend
 echo "🔨 Building frontend..."
-npx vite build
+npm run build
 
 # Return to root
 cd ..
